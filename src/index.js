@@ -14,15 +14,32 @@ client.on('ready', (c) => {
   console.log(`✅ ${c.user.tag} is online.`);
 });
 
-client.on('interactionCreate', (interaction) => {
-  if (!interaction.isChatInputCommand()) return;
+client.on(`interactionCreate`, async (interaction) => {
+  try {
+    if (!interaction.isButton()) return;
+  await interaction.deferReply({ephemeral: true});
+  const role = interaction.guild.roles.cache.get(interaction.customId);
+  if (!role) {
+    interaction.editReply({
+      content: "I couldn't find that role",
+    })
+    return;
+}
 
-  if (interaction.commandName === 'add') {
-    const num1 = interaction.options.get('first-number').value;
-    const num2 = interaction.options.get('second-number').value;
+const hasRole = interaction.member.roles.cache.has(role.id);
 
-    interaction.reply(`The sum is ${num1 + num2}`);
+if (hasRole) {
+  await interaction.member.roles.remove(role);
+  await interaction.editReply(`The role ${role} has been removed`);
+  return;
+}
+
+await interaction.member.roles.add(role);
+await interaction.editReply(`The role ${role} has been added.`);
+
+  } catch (error) {
+    console.log(error);
   }
-});
+})
 
 client.login(process.env.TOKEN);
